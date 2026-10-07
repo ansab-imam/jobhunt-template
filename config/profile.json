@@ -1,0 +1,93 @@
+{
+  "me": {
+    "name": "Jane Doe",
+    "first_name": "Jane",
+    "headline": "Your headline",
+    "location": "City, Country",
+    "email": "you@example.com",
+    "phone": "+00 000 0000000",
+    "linkedin": "linkedin.com/in/yourname",
+    "availability": "Your working hours / time zones"
+  },
+  "searches": [
+    {
+      "name": "Local (example)",
+      "active": true,
+      "priority": 1,
+      "keywords": [
+        "Your target role"
+      ],
+      "target_countries": [
+        "XX"
+      ],
+      "cities": [
+        "Your City"
+      ],
+      "work_mode": [
+        "On-site",
+        "Hybrid",
+        "Remote"
+      ],
+      "employment_types": [
+        "Full-time",
+        "Part-time"
+      ],
+      "pay_floor": {
+        "amount": 0,
+        "currency": "USD",
+        "period": "month"
+      },
+      "employer_country_rule": "Any",
+      "sources": [
+        "LinkedIn (public job pages)",
+        "national job boards"
+      ]
+    },
+    {
+      "name": "International remote (example)",
+      "active": true,
+      "priority": 2,
+      "keywords": [
+        "Your target role"
+      ],
+      "target_countries": [
+        "US",
+        "CA",
+        "UK"
+      ],
+      "work_mode": [
+        "Remote"
+      ],
+      "employment_types": [
+        "Full-time",
+        "Contract"
+      ],
+      "pay_floor": {
+        "amount": 0,
+        "currency": "USD",
+        "period": "month"
+      }
+    }
+  ],
+  "deal_breakers": [
+    "Commission-only",
+    "Pay to apply"
+  ],
+  "excluded_employer_countries": {
+    "_note": "ISO codes of employer countries to skip for remote searches",
+    "codes": []
+  },
+  "my_timezone": "UTC",
+  "daily_goals": {
+    "applications": 10,
+    "outreach_messages": 5
+  },
+  "follow_up_days": [
+    6,
+    14
+  ],
+  "ghost_after_days": 30,
+  "max_posting_age_days": 10,
+  "hourly_hours_per_month": 173,
+  "hourly_hours_per_month_part_time": 87
+}

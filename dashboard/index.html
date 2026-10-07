@@ -1,0 +1,1003 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Job Search Tracker</title>
+<style>
+:root {
+  --bg: #f6f6f4; --surface: #fcfcfb; --surface-2: #f0efec; --border: #e2e1dc;
+  --text: #0b0b0b; --text-2: #52514e; --muted: #77766f;
+  --accent: #2a78d6; --accent-soft: #e3eefb; --bar: #2a78d6;
+  --danger: #c62f2f; --danger-soft: #fbe7e6; --good: #0b7d0b; --good-soft: #e3f4e3;
+  --warn-soft: #fff4d6;
+  --radius: 10px; --shadow: 0 1px 2px rgba(0,0,0,.06);
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #111110; --surface: #1a1a19; --surface-2: #242422; --border: #33332f;
+    --text: #ffffff; --text-2: #c3c2b7; --muted: #9a998f;
+    --accent: #6da7ec; --accent-soft: #1c2c40; --bar: #3987e5;
+    --danger: #f07a79; --danger-soft: #3a1d1c; --good: #5fd05f; --good-soft: #17301a;
+    --warn-soft: #3a3010; --shadow: none;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #111110; --surface: #1a1a19; --surface-2: #242422; --border: #33332f;
+  --text: #ffffff; --text-2: #c3c2b7; --muted: #9a998f;
+  --accent: #6da7ec; --accent-soft: #1c2c40; --bar: #3987e5;
+  --danger: #f07a79; --danger-soft: #3a1d1c; --good: #5fd05f; --good-soft: #17301a;
+  --warn-soft: #3a3010; --shadow: none;
+}
+* { box-sizing: border-box; }
+body { margin: 0; background: var(--bg); color: var(--text);
+  font: 15px/1.45 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; }
+a { color: var(--accent); }
+header { position: sticky; top: 0; z-index: 5; background: var(--surface);
+  border-bottom: 1px solid var(--border); }
+.bar-top { display: flex; align-items: center; gap: 12px; padding: 10px 16px; max-width: 1200px; margin: 0 auto; }
+.bar-top h1 { font-size: 17px; margin: 0; flex: 1; }
+nav { display: flex; gap: 4px; overflow-x: auto; padding: 0 12px; max-width: 1200px; margin: 0 auto; }
+nav button { border: 0; background: none; color: var(--text-2); padding: 10px 12px; font: inherit;
+  border-bottom: 2px solid transparent; cursor: pointer; white-space: nowrap; }
+nav button.on { color: var(--text); border-bottom-color: var(--accent); font-weight: 600; }
+main { max-width: 1200px; margin: 0 auto; padding: 16px; }
+.btn { border: 1px solid var(--border); background: var(--surface); color: var(--text);
+  border-radius: 8px; padding: 6px 10px; font: inherit; font-size: 13px; cursor: pointer; text-decoration: none;
+  display: inline-flex; align-items: center; gap: 4px; }
+.btn:hover { border-color: var(--accent); }
+.btn.primary { background: var(--accent); border-color: var(--accent); color: #fff; }
+.card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius);
+  padding: 14px; box-shadow: var(--shadow); }
+.grid { display: grid; gap: 12px; }
+.g2 { grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); }
+.tiles { display: grid; gap: 10px; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); }
+.tile { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 12px; }
+.tile .v { font-size: 26px; font-weight: 650; }
+.tile .l { color: var(--text-2); font-size: 13px; }
+h2 { font-size: 16px; margin: 20px 0 10px; }
+h3 { font-size: 14px; margin: 0 0 8px; color: var(--text-2); font-weight: 600; }
+.muted { color: var(--muted); }
+.small { font-size: 13px; }
+.progress { height: 10px; background: var(--surface-2); border-radius: 6px; overflow: hidden; margin-top: 6px; }
+.progress > div { height: 100%; background: var(--accent); border-radius: 6px; }
+.task { display: flex; gap: 10px; padding: 10px 0; border-top: 1px solid var(--border); }
+.task:first-of-type { border-top: 0; }
+.task input { margin-top: 4px; width: 18px; height: 18px; flex: none; }
+.task .t { font-weight: 550; }
+.task.overdue .t { color: var(--danger); }
+.task.pending { opacity: .5; }
+.pill { display: inline-block; font-size: 12px; padding: 1px 8px; border-radius: 999px;
+  background: var(--surface-2); color: var(--text-2); }
+.pill.red { background: var(--danger-soft); color: var(--danger); }
+.pill.green { background: var(--good-soft); color: var(--good); }
+.pill.blue { background: var(--accent-soft); color: var(--accent); }
+.draft { margin-top: 8px; background: var(--surface-2); border-radius: 8px; padding: 10px; }
+.draft pre { white-space: pre-wrap; font: 13px/1.45 ui-monospace, Consolas, monospace; margin: 6px 0 8px; max-height: 220px; overflow: auto; }
+.actions { display: flex; flex-wrap: wrap; gap: 6px; }
+.kanban { display: grid; grid-auto-flow: column; grid-auto-columns: minmax(220px, 1fr); gap: 10px; overflow-x: auto; padding-bottom: 8px; }
+.col { background: var(--surface-2); border-radius: var(--radius); padding: 8px; min-height: 120px; }
+.col h3 { display: flex; justify-content: space-between; margin: 4px 4px 8px; }
+.kcard { background: var(--surface); border: 1px solid var(--border); border-radius: 8px; padding: 8px; margin-bottom: 6px; font-size: 13px; }
+.kcard b { display: block; font-size: 14px; }
+.filters { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 10px; }
+.filters select, .filters input { font: inherit; font-size: 13px; padding: 6px 8px; border-radius: 8px;
+  border: 1px solid var(--border); background: var(--surface); color: var(--text); }
+.filters input { flex: 1; min-width: 180px; }
+.tablewrap { overflow-x: auto; background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); }
+table { border-collapse: collapse; width: 100%; font-size: 13px; }
+th, td { text-align: left; padding: 7px 10px; border-bottom: 1px solid var(--border); white-space: nowrap; }
+th { background: var(--surface-2); cursor: pointer; user-select: none; position: sticky; top: 0; }
+td.wrap { white-space: normal; min-width: 180px; }
+td.num, th.num { text-align: right; font-variant-numeric: tabular-nums; }
+tr.overdue td { color: var(--danger); }
+#banner { display: none; background: var(--warn-soft); border-bottom: 1px solid var(--border); }
+#banner .in { max-width: 1200px; margin: 0 auto; padding: 10px 16px; display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+#banner.show { display: block; }
+.modal { position: fixed; inset: 0; background: rgba(0,0,0,.45); display: none; align-items: center; justify-content: center; z-index: 20; padding: 16px; }
+.modal.show { display: flex; }
+.modal .card { max-width: 760px; width: 100%; max-height: 90vh; overflow: auto; }
+.modal pre { white-space: pre-wrap; word-break: break-all; background: var(--surface-2); padding: 10px; border-radius: 8px; font-size: 12px; }
+/* charts */
+.chart { position: relative; }
+.hbar { display: grid; grid-template-columns: minmax(80px, 140px) 1fr 70px; gap: 8px; align-items: center;
+  font-size: 13px; padding: 3px 0; }
+.hbar .track { height: 14px; }
+.hbar .fill { height: 100%; background: var(--bar); border-radius: 0 4px 4px 0; min-width: 2px; }
+.hbar .lab { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--text-2); }
+.hbar .val { text-align: right; font-variant-numeric: tabular-nums; color: var(--text-2); }
+.hbar:hover .fill { filter: brightness(1.12); }
+.vbars { display: flex; align-items: flex-end; gap: 2px; height: 160px; border-bottom: 1px solid var(--border); }
+.vbars .b { flex: 1; display: flex; flex-direction: column; justify-content: flex-end; height: 100%; cursor: default; }
+.vbars .b .fill { background: var(--bar); border-radius: 4px 4px 0 0; min-height: 0; }
+.vbars .b:hover .fill { filter: brightness(1.12); }
+.xlabels { display: flex; gap: 2px; font-size: 11px; color: var(--muted); }
+.xlabels span { flex: 1; text-align: center; overflow: hidden; }
+#tip { position: fixed; pointer-events: none; background: var(--text); color: var(--bg); font-size: 12px;
+  padding: 5px 8px; border-radius: 6px; display: none; z-index: 30; white-space: nowrap; }
+.empty { color: var(--muted); padding: 12px 0; }
+.boardbar { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin-bottom: 12px; }
+.boardbar input[type=search] { flex: 1; min-width: 220px; font: inherit; padding: 9px 12px; border-radius: 8px; border: 1px solid var(--border); background: var(--surface); color: var(--text); }
+.boardbar select, .boardbar input[type=date] { font: inherit; font-size: 13px; padding: 7px 8px; border-radius: 8px; border: 1px solid var(--border); background: var(--surface); color: var(--text); }
+.kanban { grid-auto-columns: minmax(190px, 1fr); scrollbar-color: var(--border) transparent; }
+.kanban::-webkit-scrollbar { height: 10px; } .kanban::-webkit-scrollbar-thumb { background: var(--border); border-radius: 6px; } .kanban::-webkit-scrollbar-track { background: transparent; }
+.kcol { background: var(--surface-2); border-radius: var(--radius); padding: 8px; min-height: 160px; transition: outline .1s; }
+.kcol.over { outline: 2px dashed var(--accent); }
+.kcol h3 { display: flex; justify-content: space-between; margin: 4px 4px 8px; }
+.kcard[draggable=true] { cursor: grab; }
+.kcard.due { border-left: 3px solid var(--danger); }
+.chartwrap { position: relative; }
+.chartwrap svg { width: 100%; height: 190px; display: block; }
+.chartwrap .grid line { stroke: var(--border); }
+.chartwrap .axis text { fill: var(--muted); font-size: 11px; }
+.chartwrap .line { fill: none; stroke: var(--bar); stroke-width: 2; }
+.chartwrap .area { fill: var(--bar); opacity: .12; }
+.chartwrap .dot { fill: var(--bar); stroke: var(--surface); stroke-width: 2; }
+.jcard { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 14px; margin-bottom: 10px; }
+.jcard .top { display: flex; gap: 10px; align-items: flex-start; flex-wrap: wrap; }
+.jcard .top .ttl { flex: 1; min-width: 200px; }
+.jcard .ttl b { font-size: 16px; }
+.jcard .meta { display: flex; flex-wrap: wrap; gap: 6px; margin: 8px 0; }
+.jcard .why { font-size: 13px; color: var(--text-2); }
+.chips { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; align-items: center; }
+.chips[hidden] { display: none; }
+.chips button { font-size: 12px; }
+.btn.good { background: var(--good-soft); color: var(--good); border-color: transparent; }
+.btn.bad { background: var(--danger-soft); color: var(--danger); border-color: transparent; }
+.btn.big { padding: 8px 14px; font-size: 14px; }
+.addbox { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 14px; }
+.addbox input { flex: 1; min-width: 220px; font: inherit; padding: 8px 10px; border-radius: 8px; border: 1px solid var(--border); background: var(--surface); color: var(--text); }
+#saveState { font-size: 12px; }
+.count { display: inline-block; min-width: 18px; padding: 0 6px; margin-left: 4px; border-radius: 999px; background: var(--accent); color: #fff; font-size: 11px; line-height: 18px; text-align: center; }
+.err { background: var(--danger-soft); color: var(--danger); padding: 12px; border-radius: 8px; }
+@media (max-width: 600px) {
+  main { padding: 12px; }
+  .hbar { grid-template-columns: 90px 1fr 56px; }
+}
+</style>
+</head>
+<body>
+<header>
+  <div class="bar-top">
+    <h1>Job Search Tracker</h1>
+    <span id="saveState" class="muted"></span>
+    <span class="muted small" id="today"></span>
+    <button class="btn" id="reload" title="Reload data">Reload</button>
+    <button class="btn" onclick="S.tab='myinfo';S.tabChosen=true;render()" title="Saved answers Claude reuses on forms">👤 My Info</button>
+    <button class="btn" onclick="exportBackup()" title="Download a backup of all your data">⬇️ Export</button>
+    <label class="btn" style="cursor:pointer" title="Restore from a backup file">⬆️ Import<input type="file" accept=".json,application/json" hidden onchange="importBackup(this)"></label>
+    <button class="btn" id="theme" title="Toggle light/dark">Theme</button>
+  </div>
+  <nav id="tabs">
+    <button data-tab="board" class="on">Dashboard</button>
+    <button data-tab="review">① Review</button>
+    <button data-tab="applying">② Applying</button>
+  </nav>
+</header>
+<div id="banner"><div class="in">
+  <b id="pendingCount"></b>
+  <span class="small">The dashboard can't write files. Save your changes:</span>
+  <button class="btn primary" id="dlTasks">Download tasks.csv</button>
+  <button class="btn primary" id="dlActivity">Download activity.csv</button>
+  <button class="btn" id="showLines">Show lines to paste</button>
+  <button class="btn" id="clearPending">Discard</button>
+</div></div>
+<main id="main"><p class="muted">Loading…</p></main>
+<div class="modal" id="modal"><div class="card" id="modalBody"></div></div>
+<div id="tip"></div>
+
+<script>
+"use strict";
+// ---------- data loading ----------
+const BASE = "../";
+const S = { jobs: [], tasks: [], contacts: [], activity: [], profile: {}, drafts: {}, tab: "today",
+            sort: { key: "date_found", dir: -1 }, filters: {} };
+const PENDING_KEY = "jobtracker.pending.v1";
+const STATUSES = ["Shortlisted","Approved","Applying","Ready","Applied","Screening","Interview","Offer","Accepted","Rejected","Ghosted","Withdrawn","Skipped","On-hold"];
+const REPLY = new Set(["Screening","Interview","Offer","Accepted"]);
+const RESPONSE_EVENTS = new Set(["Reply","Interview","Offer","Rejected"]);
+const TASK_HEADER = ["id","created","due_date","type","job_id","contact_id","title","details","draft_file","status","done_date"];
+const ACT_HEADER = ["date","type","job_id","contact_id","channel","summary","task_id"];
+
+function parseCSV(text) {
+  const rows = []; let row = [], f = "", q = false;
+  text = text.replace(/^﻿/, "");
+  for (let i = 0; i < text.length; i++) {
+    const c = text[i];
+    if (q) {
+      if (c === '"') { if (text[i + 1] === '"') { f += '"'; i++; } else q = false; }
+      else f += c;
+    } else if (c === '"') q = true;
+    else if (c === ",") { row.push(f); f = ""; }
+    else if (c === "\n" || c === "\r") {
+      if (c === "\r" && text[i + 1] === "\n") i++;
+      row.push(f); f = ""; if (row.some(x => x !== "")) rows.push(row); row = [];
+    } else f += c;
+  }
+  if (f !== "" || row.length) { row.push(f); if (row.some(x => x !== "")) rows.push(row); }
+  const head = rows.shift() || [];
+  return rows.map(r => Object.fromEntries(head.map((h, i) => [h.trim(), (r[i] || "").trim()])));
+}
+const csvCell = v => /[",\n\r]/.test(v = String(v ?? "")) ? '"' + v.replace(/"/g, '""') + '"' : v;
+const toCSV = (header, rows) => [header.join(","), ...rows.map(r => header.map(h => csvCell(r[h])).join(","))].join("\n") + "\n";
+
+let API = null;   // true on Vercel (live data from GitHub + saving), false on a plain local server
+async function detectAPI() {
+  if (API !== null) return API;
+  try { const r = await fetch(BASE + "api/file?path=config/profile.json", { cache: "no-store" }); API = r.ok; }
+  catch { API = false; }
+  return API;
+}
+async function getText(p) {
+  const url = API ? BASE + "api/file?path=" + encodeURIComponent(p) + "&t=" + Date.now() : BASE + p + "?t=" + Date.now();
+  const r = await fetch(url, { cache: "no-store" });
+  if (!r.ok) throw new Error(p + " → HTTP " + r.status);
+  return r.text();
+}
+async function load() {
+  try {
+    await detectAPI();
+    const [jobs, tasks, contacts, activity, profile] = await Promise.all([
+      getText("data/jobs.csv"), getText("data/tasks.csv"), getText("data/contacts.csv"),
+      getText("data/activity.csv"), getText("config/profile.json")]);
+    try { S.questions = parseCSV(await getText("data/questions.csv")); } catch { S.questions = []; }
+    try { S.bank = parseCSV(await getText("data/answer-bank.csv")); } catch { S.bank = []; }
+    try { S.requests = parseCSV(await getText("data/requests.csv")); } catch { S.requests = []; }
+    Object.assign(S, { jobs: parseCSV(jobs), tasks: parseCSV(tasks), contacts: parseCSV(contacts),
+      activity: parseCSV(activity), profile: JSON.parse(profile) });
+    const files = [...new Set([...S.tasks.filter(t => t.draft_file && t.status === "Open").map(t => t.draft_file),
+      ...S.jobs.filter(j => j.status === "Approved").flatMap(j => [`drafts/${j.id}-cover-note.md`, `drafts/${j.id}-recruiter-dm.md`])])];
+    await Promise.all(files.map(async f => { try { S.drafts[f] = parseDraft(await getText(f)); } catch { S.drafts[f] = null; } }));
+    if (!API) applyPending();
+    if (!S.tabChosen) S.tab = "board";
+    render();
+    notifyOnce();
+  } catch (e) {
+    document.getElementById("main").innerHTML = `<div class="err"><b>Couldn't load data.</b> ${esc(e.message)}<br><br>
+      Open this page through a local server, not by double-clicking the file:<br>
+      <code>cd jobhunt</code> then <code>python -m http.server 8000</code> and visit
+      <a href="http://localhost:8000/dashboard/">http://localhost:8000/dashboard/</a></div>`;
+  }
+}
+function parseDraft(text) {
+  const [head, ...rest] = text.split(/\n---\s*\n/);
+  const get = k => (head.match(new RegExp("^" + k + ":\\s*(.*)$", "mi")) || [])[1] || "";
+  return { to: get("To"), subject: get("Subject"), body: rest.join("\n---\n").trim(), raw: text };
+}
+
+// ---------- helpers ----------
+const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const pad = n => String(n).padStart(2, "0");
+const isoDate = d => `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
+const TODAY = isoDate(new Date());
+const jobById = id => S.jobs.find(j => j.id === id);
+const contactById = id => S.contacts.find(c => c.id === id);
+const daysBetween = (a, b) => Math.round((new Date(b) - new Date(a)) / 864e5);
+function isoWeek(s) {
+  const d = new Date(s + "T00:00:00Z"); const day = d.getUTCDay() || 7;
+  d.setUTCDate(d.getUTCDate() + 4 - day);
+  const y = d.getUTCFullYear(); const w = Math.ceil(((d - Date.UTC(y, 0, 1)) / 864e5 + 1) / 7);
+  return `${y}-W${pad(w)}`;
+}
+function money(j) {
+  if (!j.pay_min && !j.pay_max) return "-";
+  const r = [j.pay_min, j.pay_max].filter(Boolean).join("–");
+  return `${r} ${j.currency || ""}/${j.pay_period || "?"}`;
+}
+const usd = j => j.pay_usd_month_est ? `~$${Number(j.pay_usd_month_est).toLocaleString()}/mo` : "";
+
+// ---------- pending local changes (Mark sent / done) ----------
+function getPending() { try { return JSON.parse(localStorage.getItem(PENDING_KEY)) || []; } catch { return []; } }
+function setPending(p) { try { localStorage.setItem(PENDING_KEY, JSON.stringify(p)); } catch {} }
+function applyPending() {
+  const p = getPending().filter(x => S.tasks.some(t => t.id === x.task_id && t.status === "Open"));
+  setPending(p);   // drop changes already saved in the CSV
+  for (const x of p) {
+    const t = S.tasks.find(t => t.id === x.task_id);
+    t.status = "Done"; t.done_date = x.date; t._pending = true;
+    if (x.activity) S.activity.push({ ...x.activity, _pending: true });
+  }
+  const b = document.getElementById("banner");
+  b.classList.toggle("show", p.length > 0);
+  document.getElementById("pendingCount").textContent = `${p.length} unsaved change${p.length === 1 ? "" : "s"}.`;
+}
+const ACT_FOR_TYPE = { "Follow-up": "Follow-up", "Outreach": "Outreach", "Thank-you": "Follow-up",
+  "Reply": "Reply", "Apply": "Note", "Interview": "Interview", "Interview-prep": "Note", "Custom": "Note" };
+// ---------- saving (Vercel API) ----------
+let queue = [], timer = null, saving = false;
+function setSaveState(text, cls) { const el = document.getElementById("saveState"); el.textContent = text; el.style.color = cls ? `var(--${cls})` : ""; }
+function save(action) {
+  queue.push(action); setSaveState("Saving…");
+  clearTimeout(timer); timer = setTimeout(flush, 800);
+}
+async function flush() {
+  if (saving || !queue.length) return;
+  saving = true; const batch = queue; queue = [];
+  try {
+    const r = await fetch(BASE + "api/save", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ actions: batch, today: TODAY }) });
+    const out = await r.json();
+    if (!r.ok || !out.ok) throw new Error(out.error || "HTTP " + r.status);
+    const bad = out.results.filter(x => !x.ok);
+    if (bad.length) { setSaveState("Some changes failed", "danger"); alert(bad.map(b => b.error).join("\n")); load(); }
+    else setSaveState("Saved ✓", "good");
+    if (batch.some(a => a.type === "add_job")) load();
+  } catch (e) {
+    setSaveState("Not saved!", "danger");
+    alert("Couldn't save: " + e.message + "\nYour last clicks were not saved. The page will reload.");
+    load();
+  } finally { saving = false; if (queue.length) flush(); }
+}
+function setStatus(jobId, status, reason) {
+  const j = jobById(jobId); if (!j) return;
+  if (!API) { alert(`Saving works on the online (Vercel) version. Tell the AI: "${status} ${jobId}${reason ? " - " + reason : ""}"`); return; }
+  j.status = status; if (status === "Applied" && !j.date_applied) j.date_applied = TODAY;
+  save({ type: "status", job_id: jobId, status, reason: reason || "" });
+  render();
+}
+function keepAll() {
+  const list = S.jobs.filter(j => j.status === "Shortlisted");
+  list.forEach(j => setStatus(j.id, "Approved"));
+}
+function addJob() {
+  const inp = document.getElementById("newLink"); const url = inp.value.trim();
+  if (!/^https?:\/\//i.test(url)) { alert("Paste a full job link starting with https://"); return; }
+  if (!API) { alert("Saving works on the online (Vercel) version. Send the link to the AI instead."); return; }
+  const n = u => u.replace(/\/+$/, "").toLowerCase();
+  if (S.jobs.some(j => n(j.job_url) === n(url))) { alert("This link is already in the tracker."); return; }
+  save({ type: "add_job", url, note: document.getElementById("newNote").value.trim() });
+  inp.value = ""; document.getElementById("newNote").value = "";
+}
+
+function markDone(taskId, sent) {
+  const t = S.tasks.find(t => t.id === taskId);
+  if (!t) return;
+  if (API) { t.status = "Done"; t.done_date = TODAY; save({ type: "task_done", task_id: taskId, sent: !!sent }); render(); return; }
+  const activity = (sent || ["Follow-up", "Outreach", "Thank-you"].includes(t.type)) ? {
+    date: TODAY, type: ACT_FOR_TYPE[t.type] || "Note", job_id: t.job_id, contact_id: t.contact_id,
+    channel: sent ? "Email" : "", summary: (sent ? "Sent: " : "Done: ") + t.title, task_id: t.id } : null;
+  const p = getPending(); p.push({ task_id: taskId, date: TODAY, activity }); setPending(p);
+  load();
+}
+function download(name, text) {
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(new Blob([text], { type: "text/csv" }));
+  a.download = name; a.click(); setTimeout(() => URL.revokeObjectURL(a.href), 1000);
+}
+document.getElementById("dlTasks").onclick = () => download("tasks.csv", toCSV(TASK_HEADER, S.tasks));
+document.getElementById("dlActivity").onclick = () => download("activity.csv", toCSV(ACT_HEADER, S.activity));
+document.getElementById("clearPending").onclick = () => { if (confirm("Discard unsaved changes?")) { setPending([]); load(); } };
+document.getElementById("showLines").onclick = () => {
+  const p = getPending();
+  const taskLines = p.map(x => toCSV(TASK_HEADER, [S.tasks.find(t => t.id === x.task_id)]).split("\n")[1]);
+  const actLines = p.filter(x => x.activity).map(x => toCSV(ACT_HEADER, [x.activity]).split("\n")[1]);
+  window._actLines = actLines.join("\n");
+  openModal(`<h2 style="margin-top:0">Lines to paste</h2>
+    <p class="small">In <b>data/tasks.csv</b>, replace each row with the same id by:</p><pre>${esc(taskLines.join("\n"))}</pre>
+    <p class="small">Append to the end of <b>data/activity.csv</b>:</p><pre>${esc(actLines.join("\n") || "(nothing)")}</pre>
+    <p class="small muted">Or just tell the AI assistant: "mark ${p.map(x => x.task_id).join(", ")} done". After the files
+    are updated, reload this page and the banner disappears.</p>
+    <div class="actions"><button class="btn" onclick="copy(window._actLines, this)">Copy activity lines</button>
+    <button class="btn primary" onclick="closeModal()">Close</button></div>`);
+};
+function openModal(html) { document.getElementById("modalBody").innerHTML = html; document.getElementById("modal").classList.add("show"); }
+function closeModal() { document.getElementById("modal").classList.remove("show"); }
+document.getElementById("modal").onclick = e => { if (e.target.id === "modal") closeModal(); };
+async function copy(text, btn) {
+  try { await navigator.clipboard.writeText(text); }
+  catch { const ta = document.createElement("textarea"); ta.value = text; document.body.append(ta); ta.select(); document.execCommand("copy"); ta.remove(); }
+  if (btn) { const o = btn.textContent; btn.textContent = "Copied ✓"; setTimeout(() => btn.textContent = o, 1200); }
+}
+
+// ---------- notifications ----------
+function notifyOnce() {
+  if (sessionStorage.getItem("notified") || !("Notification" in window)) return;
+  const n = dueTasks().length;
+  const show = () => { try { new Notification("Job search", { body: `${n} task${n === 1 ? "" : "s"} due today` }); } catch {} };
+  sessionStorage.setItem("notified", "1");
+  if (Notification.permission === "granted") show();
+  else if (Notification.permission === "default") Notification.requestPermission().then(p => p === "granted" && show());
+}
+
+// ---------- tabs ----------
+document.getElementById("tabs").onclick = e => {
+  const b = e.target.closest("button"); if (!b) return;
+  S.tab = b.dataset.tab; S.tabChosen = true;
+  try { localStorage.setItem("jobtracker.tab", S.tab); } catch {}
+  render();
+};
+S.tab = "board";  // always open on the Dashboard
+document.getElementById("reload").onclick = () => load();
+document.getElementById("theme").onclick = () => {
+  const dark = document.documentElement.dataset.theme === "dark" ||
+    (!document.documentElement.dataset.theme && matchMedia("(prefers-color-scheme: dark)").matches);
+  document.documentElement.dataset.theme = dark ? "light" : "dark";
+  try { localStorage.setItem("jobtracker.theme", document.documentElement.dataset.theme); } catch {}
+};
+try { const th = localStorage.getItem("jobtracker.theme"); if (th) document.documentElement.dataset.theme = th; } catch {}
+document.getElementById("today").textContent = new Date().toDateString();
+
+function render() {
+  const counts = { review: S.jobs.filter(j => ["Shortlisted", "Approved"].includes(j.status)).length,
+    applying: S.jobs.filter(j => j.status === "Applying").length,   // paused jobs don't count
+  };
+  document.querySelectorAll("#tabs button").forEach(b => {
+    b.classList.toggle("on", b.dataset.tab === S.tab);
+    if (!b.dataset.label) b.dataset.label = b.textContent.trim();
+    b.innerHTML = esc(b.dataset.label) + (counts[b.dataset.tab] ? `<span class="count">${counts[b.dataset.tab]}</span>` : "");
+  });
+  const m = document.getElementById("main");
+  m.innerHTML = ({ review: viewApply, apply: viewApply, applying: viewApplying, board: viewBoard, myinfo: viewMyInfo, today: viewToday, pipeline: viewPipeline, jobs: viewJobs, reports: viewReports, contacts: viewContacts }[S.tab] || viewBoard)();
+  if (S.tab === "jobs") bindJobs();
+  if (S.tab === "board") bindBoard();
+}
+
+// ---------- TODAY ----------
+const dueTasks = () => S.tasks.filter(t => t.status === "Open" && t.due_date && t.due_date <= TODAY);
+const TYPE_ORDER = ["Interview","Interview-prep","Reply","Follow-up","Thank-you","Apply","Outreach","Custom"];
+function viewToday() {
+  const goals = S.profile.daily_goals || {};
+  const appliedToday = new Set([...S.jobs.filter(j => j.date_applied === TODAY).map(j => j.id),
+    ...S.activity.filter(a => a.date === TODAY && a.type === "Applied").map(a => a.job_id)]).size;
+  const msgsToday = S.activity.filter(a => a.date === TODAY && a.type === "Outreach").length;
+  const prog = (label, n, goal) => `<div class="tile"><div class="l">${label}</div>
+    <div class="v">${n}<span class="muted small"> / ${goal}</span></div>
+    <div class="progress" role="progressbar" aria-valuenow="${n}" aria-valuemax="${goal}"><div style="width:${Math.min(100, goal ? n / goal * 100 : 0)}%"></div></div></div>`;
+  const due = dueTasks();
+  const overdue = due.filter(t => t.due_date < TODAY).length;
+  const doneToday = S.tasks.filter(t => t.status === "Done" && t.done_date === TODAY);
+  const groups = TYPE_ORDER.map(type => [type, due.filter(t => t.type === type)]).filter(g => g[1].length);
+  const upcoming = S.tasks.filter(t => t.status === "Open" && t.due_date > TODAY).sort((a, b) => a.due_date.localeCompare(b.due_date)).slice(0, 8);
+  return `
+  <div class="tiles">
+    ${prog("Applied today", appliedToday, goals.applications || 0)}
+    ${prog("Messages today", msgsToday, goals.outreach_messages || 0)}
+    <div class="tile"><div class="l">Due / overdue</div><div class="v">${due.length}${overdue ? ` <span class="pill red">${overdue} overdue</span>` : ""}</div></div>
+    <div class="tile"><div class="l">Done today</div><div class="v">${doneToday.length}</div></div>
+  </div>
+  ${groups.length ? groups.map(([type, ts]) => `<h2>${esc(type)} <span class="muted">(${ts.length})</span></h2>
+    <div class="card">${ts.sort((a, b) => a.due_date.localeCompare(b.due_date)).map(taskRow).join("")}</div>`).join("")
+    : `<div class="card" style="margin-top:16px"><p class="empty">Nothing due today. 🎉 Run <code>python scripts/generate_tasks.py</code> to refresh tasks.</p></div>`}
+  ${doneToday.length ? `<h2>Done today</h2><div class="card">${doneToday.map(taskRow).join("")}</div>` : ""}
+  ${upcoming.length ? `<h2>Coming up</h2><div class="card">${upcoming.map(taskRow).join("")}</div>` : ""}`;
+}
+function taskRow(t) {
+  const j = jobById(t.job_id), c = contactById(t.contact_id);
+  const overdue = t.status === "Open" && t.due_date < TODAY;
+  const details = t.details.replace(/^\[auto:[^\]]+\]\s*/, "");
+  const d = t.draft_file && S.drafts[t.draft_file];
+  const draft = t.status === "Open" && t.draft_file ? (d ? `<div class="draft">
+      <div class="small"><b>To:</b> ${esc(d.to || "(add recipient)")}<br><b>Subject:</b> ${esc(d.subject)}</div>
+      <pre>${esc(d.body)}</pre>
+      <div class="actions">
+        <button class="btn" onclick='copy(${JSON.stringify(d.body)}, this)'>Copy text</button>
+        <a class="btn" href="mailto:${encodeURIComponent(d.to)}?subject=${encodeURIComponent(d.subject)}&body=${encodeURIComponent(d.body)}">Open in email</a>
+        <a class="btn" href="${BASE + esc(t.draft_file)}" target="_blank">Open file</a>
+        <button class="btn primary" onclick="markDone('${t.id}', true)">Mark sent</button>
+      </div></div>` : `<div class="small muted">Draft file missing: ${esc(t.draft_file)}</div>`) : "";
+  const isUrl = /^https?:\/\//.test(details);
+  return `<div class="task ${overdue ? "overdue" : ""} ${t._pending ? "pending" : ""}">
+    <input type="checkbox" ${t.status !== "Open" ? "checked disabled" : ""} onchange="markDone('${t.id}', false)" aria-label="Mark done">
+    <div style="flex:1;min-width:0">
+      <div class="t">${esc(t.title)} ${overdue ? `<span class="pill red">due ${esc(t.due_date)}</span>` : ""} ${t._pending ? '<span class="pill">unsaved</span>' : ""}</div>
+      <div class="small muted">${j ? `${esc(j.company)} · ${esc(j.role)} · <span class="pill">${esc(j.status)}</span> ` : ""}
+        ${c ? ` · 👤 ${esc(c.name)}${c.email ? " (" + esc(c.email) + ")" : ""}` : ""}
+        ${j && j.job_url ? ` · <a href="${esc(j.job_url)}" target="_blank" rel="noopener">job post</a>` : ""}</div>
+      ${details ? `<div class="small">${isUrl ? `<a href="${esc(details)}" target="_blank" rel="noopener">${esc(details)}</a>` : esc(details)}</div>` : ""}
+      ${draft}
+    </div><span class="muted small">${esc(t.id)}</span></div>`;
+}
+
+// ---------- REVIEW (new jobs found by the AI) ----------
+const SKIP_REASONS = ["Pay too low", "Location doesn't fit", "Not my role", "Company looks weak", "Hours don't work", "Other"];
+function ago(d) { if (!d) return ""; const n = daysBetween(d, TODAY); return n <= 0 ? "today" : n === 1 ? "1 day ago" : n < 60 ? n + " days ago" : Math.round(n / 30) + " months ago"; }
+function niceDate(d) { try { return new Date(d + "T12:00:00").toLocaleDateString("en-GB", { weekday: "short", day: "numeric", month: "short", year: "numeric" }); } catch { return d; } }
+function companyInfo(j) {
+  if (!j.company_size && !j.company_hq && !j.company_locations && !j.foreign_presence) return "";
+  const fp = j.foreign_presence || "", yes = /^yes/i.test(fp), no = /^no/i.test(fp);
+  return `<div class="small" style="margin:6px 0;padding:8px 10px;border-radius:8px;background:var(--surface-2)">
+    🏢 <b>${esc(j.company_size || "size unknown")}</b> employees · <b>HQ:</b> ${esc(j.company_hq || "unknown")}<br>
+    📍 <b>Offices:</b> ${esc(j.company_locations || "unknown")}<br>
+    🌍 <b>Foreign presence:</b> <span style="color:var(--${yes ? "good" : no ? "danger" : "text-2"})">${esc(fp || "unknown")}</span></div>`;
+}
+function postedBadge(j) {
+  const d = j.date_posted || j.date_updated;
+  if (!d) return `<div style="margin:6px 0 2px"><span class="pill red" style="font-size:13px">📅 Posted date not shown</span></div>`;
+  const n = daysBetween(d, TODAY), old = n > 10;
+  return `<div style="margin:6px 0 2px"><span class="pill ${old ? "red" : "green"}" style="font-size:13px;font-weight:600">📅 ${j.date_posted ? "Posted" : "Updated"} ${esc(niceDate(d))} · ${n <= 0 ? "today" : n === 1 ? "1 day ago" : n + " days ago"}</span></div>`;
+}
+function postedLine(j) {
+  const p = j.date_posted ? `Posted ${esc(j.date_posted)} (${ago(j.date_posted)})` : "Posted: date not shown";
+  const u = j.date_updated ? ` · updated ${esc(j.date_updated)} (${ago(j.date_updated)})` : "";
+  const old = daysBetween(j.date_updated || j.date_posted || TODAY, TODAY) > 30;
+  return `<div class="small" style="color:var(--${old ? "danger" : "text-2"})">🗓️ ${p}${u}${old ? " · older posting, may be filled" : ""}</div>`;
+}
+function companyLink(j) {
+  return j.company_url ? ` · <a href="${esc(j.company_url)}" target="_blank" rel="noopener">🌐 ${esc(j.company)} website</a>` : "";
+}
+function jobMeta(j) {
+  const bits = [j.country && `<span class="pill">${esc(j.country)}</span>`,
+    j.location_rule && `<span class="pill ${j.location_rule === "Unclear" ? "red" : ""}">${esc(j.location_rule)}</span>`,
+    j.employment_type && `<span class="pill">${esc(j.employment_type)}</span>`,
+    `<span class="pill">${esc(money(j))}${j.pay_usd_month_est ? " · " + usd(j) : ""}</span>`,
+    j.fit_score && `<span class="pill blue">fit ${esc(j.fit_score)}/5</span>`,
+    j.priority && `<span class="pill">${esc(j.priority)}</span>`,
+    j.source && `<span class="pill">${esc(j.source)}</span>`, j.hours_timezone && `<span class="pill">${esc(j.hours_timezone)}</span>`];
+  return `<div class="meta">${bits.filter(Boolean).join("")}</div>`;
+}
+function splitNotes(n) {   // AI writes notes as "Why: ... | Red flags: ..."
+  const why = (n.match(/Why:\s*([^|]*)/i) || [])[1], red = (n.match(/Red flags?:\s*([^|]*)/i) || [])[1];
+  const tips = (n.match(/Apply tips?:\s*([^|]*)/i) || [])[1];
+  return { tips: tips ? tips.trim() : "", why: why ? why.trim() : (!red ? n : ""), red: red && !/^(none|no|-|n\/a)\.?$/i.test(red.trim()) ? red.trim() : "" };
+}
+function addBox() {
+  return `<div class="addbox"><input id="newLink" type="url" placeholder="Found a job yourself? Paste the link here…">
+    <input id="newNote" type="text" placeholder="Note (optional)" style="flex:.5">
+    <button class="btn primary big" onclick="addJob()">Add job</button></div><div class="small muted" style="margin:-8px 0 12px">Pasted links show up here in Review. Claude fills in the company, role and pay.</div>`;
+}
+function viewReview() {
+  const list = S.jobs.filter(j => j.status === "Shortlisted").sort((a, b) => (+b.fit_score || 0) - (+a.fit_score || 0) || b.date_found.localeCompare(a.date_found));
+  const head = pullBox() + `<p class="small muted" style="margin-top:0">Open each job. <b>Skip</b> what you don't like and <b>Keep</b> the rest. Kept jobs move to <b>To apply</b>, where the AI prepares your tailored resume and cover note.</p>${addBox()}`;
+  if (!list.length) return head + `<div class="card"><p class="empty">Nothing to review right now. Click 🔎 Pull latest jobs, or paste a job link above.</p></div>`;
+  return head + `<div class="actions" style="margin-bottom:10px;align-items:center"><b style="flex:1">${list.length} job${list.length > 1 ? "s" : ""} to review</b>
+      <button class="btn good" onclick="keepAll()">Keep all remaining</button></div>` +
+    list.map(j => { const n = splitNotes(j.notes);
+      return `<div class="jcard"><div class="top"><div class="ttl"><b>${esc(j.role)}</b><br><span class="muted">${esc(j.company)}</span>${companyLink(j)}${postedBadge(j)}</div>
+        <div class="actions">${j.job_url ? `<a class="btn big" href="${esc(j.job_url)}" target="_blank" rel="noopener">Open job ↗</a>` : ""}
+          <button class="btn good big" onclick="setStatus('${j.id}','Approved')">✓ Keep</button>
+          <button class="btn bad big" onclick="this.closest('.jcard').querySelector('.chips').hidden=false">✗ Skip</button></div></div>
+        ${jobMeta(j)}${companyInfo(j)}
+        ${n.why ? `<div class="why">✅ ${esc(n.why)}</div>` : ""}${n.red ? `<div class="why" style="color:var(--danger)">⚠️ ${esc(n.red)}</div>` : ""}
+        <div class="chips" hidden><span class="small muted">Why skip?</span>${SKIP_REASONS.map(r => `<button class="btn" onclick="setStatus('${j.id}','Skipped','${r}')">${r}</button>`).join("")}</div></div>`; }).join("");
+}
+
+// ---------- TO APPLY (kept jobs) ----------
+function draftBlock(file, label) {
+  const d = S.drafts[file]; if (!d) return "";
+  return `<details class="draft"><summary><b>${label}</b></summary>
+    ${d.subject ? `<div class="small"><b>Subject:</b> ${esc(d.subject)}</div>` : ""}<pre>${esc(d.body)}</pre>
+    <div class="actions"><button class="btn" onclick='copy(${JSON.stringify(d.body).replace(/'/g, "&#39;")}, this)'>Copy text</button></div></details>`;
+}
+function viewApply() {   // ① Review: every job waiting for a decision, with all details
+  const list = S.jobs.filter(j => ["Shortlisted", "Approved"].includes(j.status))
+    .sort((a, b) => (+b.fit_score || 0) - (+a.fit_score || 0) || (b.date_posted || "").localeCompare(a.date_posted || ""));
+  const head = pullBox() + `<p class="small muted" style="margin-top:0">Read each job. <b>✓ Approve</b> sends it to <b>② Applying</b>, where Claude prepares your tailored resume, cover note and form answers. <b>✗ Skip</b> removes it.</p>${addBox()}`;
+  if (!list.length) return head + `<div class="card"><p class="empty">Nothing to review. Click 🔎 Pull latest jobs, or paste a job link above.</p></div>`;
+  return head + `<div class="actions" style="margin-bottom:10px;align-items:center"><b style="flex:1">${list.length} job${list.length > 1 ? "s" : ""} to review</b></div>` + list.map(j => {
+    const n = splitNotes(j.notes), cover = S.drafts[`drafts/${j.id}-cover-note.md`];
+    return `<div class="jcard"><div class="top"><div class="ttl"><b>${esc(j.role)}</b><br><span class="muted">${esc(j.company)}</span>${companyLink(j)}${postedBadge(j)}</div>
+      <div class="actions">${j.job_url ? `<a class="btn big" href="${esc(j.job_url)}" target="_blank" rel="noopener">Open job ↗</a>` : ""}
+        <button class="btn good big" onclick="setStatus('${j.id}','Applying')">✓ Approve</button>
+        <button class="btn bad big" onclick="this.closest('.jcard').querySelector('.chips').hidden=false">✗ Skip</button></div></div>
+      ${jobMeta(j)}${companyInfo(j)}
+      ${n.why ? `<div class="why">✅ ${esc(n.why)}</div>` : ""}${n.red ? `<div class="why" style="color:var(--danger)">⚠️ ${esc(n.red)}</div>` : ""}
+      ${n.tips ? `<div class="why">📝 <b>Apply tips:</b> ${esc(n.tips)}</div>` : ""}
+      <div class="chips" hidden><span class="small muted">Why skip?</span>${SKIP_REASONS.map(r => `<button class="btn" onclick="setStatus('${j.id}','Skipped','${r}')">${r}</button>`).join("")}</div>
+      ${j.resume_used ? (() => { const f = API ? BASE + "api/file?path=" + encodeURIComponent(j.resume_used) : BASE + j.resume_used;
+          return `<details class="draft" style="margin-top:8px"><summary><b>📄 Resume preview</b> <span class="muted small">(tailored for this job)</span></summary>
+            <iframe src="${esc(f)}#view=FitH&toolbar=0" title="Resume preview" loading="lazy" style="width:100%;height:80vh;max-height:1000px;border:1px solid var(--border);border-radius:8px;background:#fff;margin-top:8px"></iframe>
+            <div class="actions" style="margin-top:6px"><a class="btn" href="${esc(f)}" target="_blank" rel="noopener">Open full screen ↗</a></div></details>`; })() : ""}
+      ${draftBlock(`drafts/${j.id}-cover-note.md`, "Cover note")}</div>`; }).join("");
+}
+
+// ---------- APPLYING (questions Claude needs the user to confirm) ----------
+function qById(id) { return S.questions.find(x => x.id === id); }
+function editQ(qid, val) {      // typing = edited, not approved
+  const q = qById(qid); if (!q) return;
+  q.answer = val; q.status = val.trim() ? "Answered" : "Open";
+  if (API) save({ type: "answer", qid, answer: val });
+}
+function approveQ(qid) {
+  const q = qById(qid); if (!q) return;
+  const el = document.getElementById("qa-" + qid);
+  if (el) q.answer = el.value;
+  if (q.required === "yes" && !q.answer.trim()) { alert("Please fill in this answer first."); return; }
+  q.status = "Approved";
+  if (API) save({ type: "approve_q", qid, answer: q.answer }); else alert("Saving works on the online version.");
+  render();
+}
+function reopenQ(qid) { const q = qById(qid); if (q) { q.status = "Answered"; if (API) save({ type: "answer", qid, answer: q.answer }); render(); } }
+function approveJob(jobId) {
+  const qs = S.questions.filter(q => q.job_id === jobId && q.status !== "Used");
+  if (qs.some(q => q.status !== "Approved")) { alert("Approve every question first."); return; }
+  if (!confirm("Send this application to Ready to submit? Claude will type your answers into the form and still ask you in chat before pressing Submit.")) return;
+  const j = jobById(jobId); if (j) j.status = "Ready";
+  save({ type: "approve_answers", job_id: jobId }); render();
+}
+const FIELD_CSS = "width:100%;font:inherit;padding:8px;border-radius:8px;border:1px solid var(--border);background:var(--surface);color:var(--text)";
+function qInput(q) {
+  const on = `id="qa-${q.id}" onchange="editQ('${q.id}', this.value)"`;
+  if (q.kind === "choice") {
+    const opts = q.options.split(";").map(o => o.trim()).filter(Boolean);
+    return `<select ${on} style="${FIELD_CSS}"><option value="">— choose —</option>${opts.map(o =>
+      `<option ${q.answer === o ? "selected" : ""}>${esc(o)}</option>`).join("")}</select>`;
+  }
+  return q.kind === "long" ? `<textarea ${on} rows="5" style="${FIELD_CSS}">${esc(q.answer)}</textarea>`
+                           : `<input ${on} value="${esc(q.answer)}" style="${FIELD_CSS}">`;
+}
+const Q_BADGE = { Open: '<span class="pill red">needs your answer</span>', Draft: '<span class="pill blue">✍️ Claude\'s suggestion: edit or approve</span>',
+  Answered: '<span class="pill">edited, not approved yet</span>', Approved: '<span class="pill green">✓ approved</span>' };
+function qBlock(q) {
+  if (q.status === "Approved") return `<div style="margin-top:10px;padding:8px 10px;border-radius:8px;background:var(--good-soft)">
+    <div class="small"><b>${esc(q.question)}</b> ${Q_BADGE.Approved} <button class="btn" style="float:right" onclick="reopenQ('${q.id}')">Edit</button></div>
+    <div class="small" style="margin-top:4px;white-space:pre-wrap">${esc(q.answer) || "<i>(left blank)</i>"}</div></div>`;
+  return `<div style="margin-top:14px"><div class="small"><b>${esc(q.question)}</b> ${q.required === "yes" ? '<span class="pill red">required</span>' : '<span class="pill">optional</span>'} ${Q_BADGE[q.status] || ""}</div>
+    ${q.notes ? `<div class="small muted">💡 ${esc(q.notes)}</div>` : ""}
+    <div style="margin-top:4px">${qInput(q)}</div>
+    <div class="actions" style="margin-top:6px"><button class="btn good" onclick="approveQ('${q.id}')">✓ Approve this answer</button></div></div>`;
+}
+function viewApplying() {
+  const qs = S.questions || [];
+  const active = S.jobs.filter(j => j.status === "Applying").map(j => j.id);
+  const paused = S.jobs.filter(j => j.status === "On-hold").map(j => j.id);
+  const ids = [...active, ...paused];   // approved jobs move to "Ready" on the Dashboard; paused ones wait at the bottom
+  const head = `<p class="small muted" style="margin-top:0">Questions Claude couldn't answer from your resume. Claude writes a suggestion where it can. <b>Edit</b> anything, then <b>✓ Approve</b> each answer. When every answer for a job is approved, click <b>Send to Ready</b> at the top. Answers like date of birth are remembered for future jobs. Nothing is submitted until you say so in chat.</p>`;
+  if (!ids.length) return head + `<div class="card"><p class="empty">Nothing here. Approve jobs on the ① Review tab.</p></div>`;
+  const bulk = `<div class="actions" style="margin-bottom:10px;align-items:center"><b style="flex:1">${active.length} active${paused.length ? ` · ${paused.length} paused` : ""}</b>
+    ${active.length > 1 ? `<button class="btn" onclick="S.jobs.filter(j=>j.status==='Applying').slice(3).forEach(j=>setStatus(j.id,'On-hold'))">⏸ Keep top 3, pause the rest</button>` : ""}
+    ${paused.length ? `<button class="btn" onclick="S.jobs.filter(j=>j.status==='On-hold').forEach(j=>setStatus(j.id,'Applying'))">▶ Resume all</button>` : ""}</div>`;
+  return head + bulk + ids.map(id => { const j = jobById(id) || { id, role: id, company: "" };
+    const isPaused = j.status === "On-hold";
+    const list = qs.filter(q => q.job_id === id && q.status !== "Used");
+    const done = list.filter(q => q.status === "Approved").length, all = list.length && done === list.length;
+    const state = isPaused ? `<span class="pill">⏸ Paused. Claude won't work on this until you resume it</span>`
+      : !list.length ? `<span class="pill blue">⏳ Claude is preparing your resume, cover note and form questions…</span>`
+      : `<button class="btn ${all ? "good" : ""} big" ${all ? "" : 'disabled style="opacity:.5;cursor:not-allowed"'} onclick="approveJob('${id}')">✓ Send to Ready (${done}/${list.length} approved)</button>`;
+    const sorted = [...list].sort((a, b) => (a.status === "Approved") - (b.status === "Approved"));
+    return `<div class="jcard" style="${isPaused ? "opacity:.55" : ""}"><div class="top"><div class="ttl"><b>${esc(j.role)}</b><br><span class="muted">${esc(j.company)} · ${esc(id)}</span>${companyLink(j)}
+        <div class="progress" style="max-width:260px"><div style="width:${list.length ? done / list.length * 100 : 0}%"></div></div></div>
+      <div class="actions">${j.job_url ? `<a class="btn" href="${esc(j.job_url)}" target="_blank" rel="noopener">Open job ↗</a>` : ""}${state}
+      ${isPaused ? `<button class="btn good" onclick="setStatus('${id}','Applying')">▶ Resume</button>` : `<button class="btn" onclick="setStatus('${id}','On-hold')">⏸ Pause</button>`}
+      <button class="btn bad" onclick="setStatus('${id}','Approved')" title="Move back to Review">Cancel</button></div></div>
+      ${sorted.map(qBlock).join("")}</div>`; }).join("");
+}
+
+// ---------- MY INFO (saved answers Claude reuses on forms) ----------
+const MYINFO_TEMPLATE = [
+  ["date_of_birth", "Date of birth (MM/DD/YYYY)"], ["nationality", "Nationality"], ["gender", "Gender (for optional diversity questions)"],
+  ["ethnicity", "Race / ethnicity (for optional diversity questions)"], ["notice_period", "Notice period at current job"],
+  ["earliest_start_date", "Earliest start date"], ["salary_expectation", "Salary expectation (e.g. USD 1,200/month)"],
+  ["current_salary", "Current salary (only if you're OK sharing)"], ["degree_result", "Bachelor's result with grading system (e.g. CGPA 3.2/4.0)"],
+  ["high_school_results", "Matric / FSc (or O/A-level) results"], ["english_level", "English level (e.g. Fluent / C1)"],
+  ["intl_travel_ok", "Willing to travel internationally? (Yes/No)"], ["work_hours", "Hours you can work (e.g. 9 AM-5 PM ET, full-time)"],
+  ["equipment", "Work setup (laptop, internet speed, backup power)"], ["work_authorization", "Work authorization (e.g. citizen of X, contractor)"],
+  ["portfolio_links", "Other links (portfolio, Upwork profile)"],
+];
+function bankSet(key, label, inputId) {
+  const v = document.getElementById(inputId).value;
+  const row = (S.bank || []).find(b => b.key === key);
+  if (row) row.answer = v; else (S.bank = S.bank || []).push({ key, label, answer: v });
+  if (API) save({ type: "bank_set", key, label, answer: v }); else alert("Saving works on the online version.");
+  render();
+}
+function bankDelete(key) {
+  S.bank = (S.bank || []).filter(b => b.key !== key);
+  if (API) save({ type: "bank_delete", key }); render();
+}
+function bankAdd() {
+  const label = document.getElementById("nb-label").value.trim(), v = document.getElementById("nb-answer").value;
+  if (!label) { alert("Give it a name, e.g. 'Upwork profile link'."); return; }
+  const key = label.toLowerCase().replace(/[^a-z0-9]+/g, "_").replace(/^_|_$/g, "").slice(0, 60);
+  (S.bank = S.bank || []).push({ key, label, answer: v });
+  if (API) save({ type: "bank_set", key, label, answer: v }); render();
+}
+function viewMyInfo() {
+  const bank = S.bank || [];
+  const rows = [...MYINFO_TEMPLATE.map(([key, label]) => bank.find(b => b.key === key) || { key, label, answer: "" }),
+                ...bank.filter(b => !MYINFO_TEMPLATE.some(t => t[0] === b.key))];
+  return `<p class="small muted" style="margin-top:0">Answers Claude reuses when application forms ask for them. Fill in once and Claude pre-fills them on every application (you still approve each one).
+    Saved only in your <b>private</b> GitHub repo, behind this login. <b>Don't put passwords, bank details or your CNIC here.</b> Claude never types government ID numbers into forms, so you enter CNIC yourself.</p>
+  <div class="card">${rows.map((b, i) => `<div style="padding:10px 0;border-top:${i ? "1px solid var(--border)" : "0"}">
+      <div class="small"><b>${esc(b.label)}</b> ${b.answer ? '<span class="pill green">saved</span>' : '<span class="pill">empty</span>'}</div>
+      <div class="actions" style="margin-top:4px;flex-wrap:nowrap">
+        <input id="mi-${i}" value="${esc(b.answer)}" style="${FIELD_CSS};flex:1" placeholder="Type your answer…">
+        <button class="btn good" onclick="bankSet('${b.key}', ${esc(JSON.stringify(b.label))}, 'mi-${i}')">Save</button>
+        ${b.answer || !MYINFO_TEMPLATE.some(t => t[0] === b.key) ? `<button class="btn bad" onclick="bankDelete('${b.key}')">✕</button>` : ""}</div></div>`).join("")}
+  </div>
+  <h2>Add something else</h2>
+  <div class="actions" style="flex-wrap:wrap"><input id="nb-label" placeholder="Name, e.g. 'Why remote work?'" style="${FIELD_CSS};flex:1;min-width:200px">
+    <input id="nb-answer" placeholder="Your answer" style="${FIELD_CSS};flex:2;min-width:200px">
+    <button class="btn primary" onclick="bankAdd()">Add</button></div>`;
+}
+
+// ---------- BACKUP (export / import) ----------
+const BACKUP_FILES = ["jobs", "tasks", "contacts", "activity", "daily-log", "questions", "answer-bank", "requests"].map(n => `data/${n}.csv`);
+async function exportBackup() {
+  const files = {};
+  for (const f of BACKUP_FILES) { try { files[f] = await getText(f); } catch {} }
+  const blob = new Blob([JSON.stringify({ app: "jobhunt", exported_at: new Date().toISOString(), files }, null, 1)], { type: "application/json" });
+  const a = document.createElement("a"); a.href = URL.createObjectURL(blob);
+  a.download = `jobhunt-backup-${TODAY}.json`; a.click(); setTimeout(() => URL.revokeObjectURL(a.href), 1000);
+}
+async function importBackup(input) {
+  const file = input.files[0]; input.value = ""; if (!file) return;
+  let data; try { data = JSON.parse(await file.text()); } catch { alert("That isn't a backup file."); return; }
+  if (!data.files) { alert("That isn't a backup file."); return; }
+  const n = Object.keys(data.files).length;
+  if (!confirm(`Restore ${n} files from the backup made ${data.exported_at || "?"}? This REPLACES the current data (the old version stays in GitHub history).`)) return;
+  if (!API) { alert("Import works on the online version."); return; }
+  setSaveState("Restoring…");
+  try {
+    const r = await fetch(BASE + "api/import", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ files: data.files }) });
+    const out = await r.json();
+    if (!r.ok || !out.ok) throw new Error(out.error || "HTTP " + r.status);
+    setSaveState("Restored ✓", "good");
+    alert(`Restored: ${out.restored.join(", ")}${out.skipped.length ? "\nSkipped: " + out.skipped.join(", ") : ""}`);
+    load();
+  } catch (e) { setSaveState("Restore failed", "danger"); alert("Couldn't restore: " + e.message); }
+}
+function backupBox() {
+  return `<h2>Backup</h2><div class="card"><p class="small muted" style="margin-top:0">Download everything (jobs, answers, My Info, history) as one file to keep on your computer. If anything ever goes missing, import that file to put it back.</p>
+    <div class="actions"><button class="btn primary" onclick="exportBackup()">⬇️ Export backup</button>
+    <label class="btn" style="cursor:pointer">⬆️ Import backup<input type="file" accept=".json,application/json" hidden onchange="importBackup(this)"></label></div></div>`;
+}
+
+// ---------- PULL LATEST JOBS ----------
+function pullBox() {
+  const rq = (S.requests || []).filter(r => r.type === "search");
+  const open = rq.find(r => r.status === "Open");
+  const last = rq.filter(r => r.status === "Done").sort((a, b) => b.done_at.localeCompare(a.done_at))[0];
+  const when = t => { try { return new Date(t).toLocaleString([], { dateStyle: "medium", timeStyle: "short" }); } catch { return t; } };
+  return `<div class="card" style="display:flex;gap:12px;align-items:center;flex-wrap:wrap;margin-bottom:12px">
+    <button class="btn primary big" ${open ? "disabled style='opacity:.6'" : ""} onclick="pullJobs()">🔎 Pull latest jobs</button>
+    <span class="small muted">${open ? `⏳ Requested ${esc(when(open.requested_at))}. Claude picks this up at its next check (every 30 min, while the Claude app is open on the laptop) — or say "pull jobs now" in chat. New jobs appear in ① Review.`
+      : last ? `Last search: ${esc(when(last.done_at))}: ${esc(last.result)}` : "Click to have Claude search for fresh jobs (posted in the last 10 days)."}</span></div>`;
+}
+function pullJobs() {
+  if (!API) { alert("Works on the online version."); return; }
+  (S.requests = S.requests || []).push({ id: "tmp", requested_at: new Date().toISOString(), type: "search", status: "Open" });
+  save({ type: "request_search" }); render();
+}
+
+// ---------- BOARD (kanban + search + graph) ----------
+const BOARD_COLS = [
+  ["Shortlisted", "🔎 To review", ["Shortlisted", "Approved"]],
+  ["Applying", "🤖 Applying", ["Applying", "On-hold"]],
+  ["Ready", "✅ Ready to submit", ["Ready"]],
+  ["Applied", "📨 Applied, waiting", ["Applied"]],
+  ["Screening", "Screening", ["Screening"]],
+  ["Interview", "Interview", ["Interview"]],
+  ["Offer", "Offer", ["Offer"]],
+  ["Accepted", "Accepted 🎉", ["Accepted"]],
+  ["Rejected", "Rejected", ["Rejected"]],
+  ["Ghosted", "Lost / no reply", ["Ghosted", "Withdrawn"]],
+  ["Skipped", "⏭️ Skipped", ["Skipped"]],
+];
+S.board = S.board || { q: "", range: "30", from: "", to: "" };
+function rangeDates() {
+  const b = S.board, end = b.range === "custom" && b.to ? b.to : TODAY;
+  let start;
+  if (b.range === "custom" && b.from) start = b.from;
+  else if (b.range === "all") start = S.jobs.map(j => j.date_applied).filter(Boolean).sort()[0] || TODAY;
+  else { const d = new Date(TODAY + "T00:00:00"); d.setDate(d.getDate() - (+b.range - 1)); start = isoDate(d); }
+  return [start, end];
+}
+function boardMatch(j) {
+  const q = S.board.q.trim().toLowerCase();
+  return !q || [j.company, j.role, j.country, j.source, j.notes, j.status, j.id].join(" ").toLowerCase().includes(q);
+}
+function lineChart(start, end) {
+  const days = []; for (let d = new Date(start + "T00:00:00"); isoDate(d) <= end; d.setDate(d.getDate() + 1)) days.push(isoDate(d));
+  if (days.length > 400) days.splice(0, days.length - 400);
+  const counts = days.map(d => S.jobs.filter(j => j.date_applied === d && boardMatch(j)).length);
+  const W = 800, H = 190, L = 30, R = 10, T = 12, B = 24, max = Math.max(1, ...counts);
+  const x = i => L + (days.length === 1 ? (W - L - R) / 2 : i * (W - L - R) / (days.length - 1));
+  const y = v => T + (H - T - B) * (1 - v / max);
+  const pts = counts.map((c, i) => `${x(i).toFixed(1)},${y(c).toFixed(1)}`).join(" ");
+  const ticks = [...new Set([0, Math.ceil(max / 2), max])];
+  const every = Math.max(1, Math.ceil(days.length / 8));
+  return `<div class="card chartwrap"><h3>Applications per day</h3>
+  <svg viewBox="0 0 ${W} ${H}" preserveAspectRatio="none" role="img" aria-label="Applications per day">
+    <g class="grid">${ticks.map(t => `<line x1="${L}" x2="${W - R}" y1="${y(t)}" y2="${y(t)}"/>`).join("")}</g>
+    <g class="axis">${ticks.map(t => `<text x="${L - 6}" y="${y(t) + 4}" text-anchor="end">${t}</text>`).join("")}
+      ${days.map((d, i) => (i % every === 0 && days.length - 1 - i >= every / 2) || i === days.length - 1 ? `<text x="${x(i)}" y="${H - 6}" text-anchor="middle">${d.slice(5)}</text>` : "").join("")}</g>
+    <polygon class="area" points="${x(0)},${y(0)} ${pts} ${x(days.length - 1)},${y(0)}"/>
+    <polyline class="line" points="${pts}"/>
+    ${counts.map((c, i) => c ? `<circle class="dot" cx="${x(i)}" cy="${y(c)}" r="4"/>` : "").join("")}
+    ${days.map((d, i) => `<rect x="${x(i) - (W - L - R) / days.length / 2}" y="0" width="${(W - L - R) / Math.max(1, days.length)}" height="${H}" fill="transparent" data-tip="${d}: ${counts[i]} applied"/>`).join("")}
+  </svg></div>`;
+}
+function boardCard(j) {
+  const due = dueTasks().filter(t => t.job_id === j.id);
+  const fu = due.find(t => t.draft_file);
+  return `<div class="kcard ${due.length ? "due" : ""}" draggable="true" data-id="${j.id}">
+    <b>${esc(j.company)}</b>${esc(j.role)}<br>
+    <span class="muted">${j.date_applied ? "Applied " + esc(j.date_applied) + " (" + ago(j.date_applied) + ")" : ""}</span>
+    ${due.map(t => `<div class="small" style="color:var(--danger);margin-top:4px">⏰ ${esc(t.title.replace(/:.*$/, ""))}</div>`).join("")}
+    <div class="actions" style="margin-top:6px">${j.job_url ? `<a class="btn" href="${esc(j.job_url)}" target="_blank" rel="noopener">Job ↗</a>` : ""}
+      ${j.company_url ? `<a class="btn" href="${esc(j.company_url)}" target="_blank" rel="noopener">🌐 Site</a>` : ""}
+      ${fu ? `<button class="btn" onclick="showTask('${fu.id}')">View follow-up</button>` : ""}</div></div>`;
+}
+function showTask(id) {
+  const t = S.tasks.find(x => x.id === id); if (!t) return;
+  openModal(`<h2 style="margin-top:0">${esc(t.title)}</h2>${taskRow(t)}<div class="actions" style="margin-top:10px"><button class="btn" onclick="closeModal()">Close</button></div>`);
+}
+function viewBoard() {
+  const b = S.board, [start, end] = rangeDates();
+  const inRange = S.jobs.filter(j => j.date_applied && j.date_applied >= start && j.date_applied <= end && boardMatch(j));
+  const st = stats(inRange);
+  const early = [["review", "To review", "Shortlisted"], ["apply", "To apply", "Approved"], ["applying", "Applying", "Applying"]]
+    .map(([tab, l, s]) => `<button class="btn" onclick="S.tab='${tab}';S.tabChosen=true;render()">${l}: <b>${S.jobs.filter(j => j.status === s).length}</b></button>`).join("");
+  const goals = S.profile.daily_goals || {};
+  const todayN = S.jobs.filter(j => j.date_applied === TODAY).length;
+  const tile = (l, v, sub = "") => `<div class="tile"><div class="l">${l}</div><div class="v">${v}</div>${sub ? `<div class="small muted">${sub}</div>` : ""}</div>`;
+  return pullBox() + `<div class="boardbar">
+      <input type="search" id="bq" placeholder="Search company, role, country… e.g. Motive" value="${esc(b.q)}">
+      <select id="brange">${[["7","Last 7 days"],["30","Last 30 days"],["90","Last 90 days"],["all","All time"],["custom","Custom…"]].map(([v,l]) => `<option value="${v}" ${b.range === v ? "selected" : ""}>${l}</option>`).join("")}</select>
+      ${b.range === "custom" ? `<input type="date" id="bfrom" value="${esc(b.from)}"> – <input type="date" id="bto" value="${esc(b.to)}">` : ""}
+    </div>
+    <div class="tiles">
+      ${tile("Applied today", `${todayN}<span class="muted small"> / ${goals.applications || 0}</span>`)}
+      ${tile("Applied (range)", st.applied)}${tile("Replies", st.replies, pct(st.rate) + " response rate")}
+      ${tile("Interviews", st.interviews)}${tile("Offers", st.offers)}
+      ${tile("Avg days to reply", st.avgDays === null ? "–" : st.avgDays.toFixed(1))}
+    </div>
+    <div style="margin-top:12px">${lineChart(start, end)}</div>
+    <div class="actions" style="margin:14px 0 8px;align-items:center"><b>All stages</b> <span class="small muted">(${S.jobs.filter(boardMatch).length} jobs)</span>
+      <span class="small muted" style="margin-left:auto">Drag cards between columns to update them</span></div>
+    <div class="kanban">${BOARD_COLS.map(([status, label, sts]) => { const js = S.jobs.filter(j => sts.includes(j.status) && boardMatch(j))
+        .sort((a, c) => (c.date_applied || "").localeCompare(a.date_applied || ""));
+      return `<div class="kcol" data-status="${status}"><h3><span>${label}</span><span class="pill">${js.length}</span></h3>
+        ${js.map(boardCard).join("") || '<div class="empty small">—</div>'}</div>`; }).join("")}</div>`;
+}
+function bindBoard() {
+  const q = document.getElementById("bq");
+  q.oninput = () => { S.board.q = q.value; const pos = q.selectionStart; render(); const n = document.getElementById("bq"); n.focus(); n.setSelectionRange(pos, pos); };
+  document.getElementById("brange").onchange = e => { S.board.range = e.target.value; render(); };
+  ["bfrom", "bto"].forEach(id => { const el = document.getElementById(id); if (el) el.onchange = () => { S.board[id === "bfrom" ? "from" : "to"] = el.value; render(); }; });
+  document.querySelectorAll(".kcard[draggable]").forEach(c => c.ondragstart = e => e.dataTransfer.setData("text/plain", c.dataset.id));
+  document.querySelectorAll(".kcol").forEach(col => {
+    col.ondragover = e => { e.preventDefault(); col.classList.add("over"); };
+    col.ondragleave = () => col.classList.remove("over");
+    col.ondrop = e => { e.preventDefault(); col.classList.remove("over");
+      const id = e.dataTransfer.getData("text/plain"), j = jobById(id);
+      if (j && j.status !== col.dataset.status && !(col.dataset.status === "Ghosted" && ["Withdrawn","On-hold"].includes(j.status))) setStatus(id, col.dataset.status); };
+  });
+}
+
+// ---------- PIPELINE ----------
+function viewPipeline() {
+  const main = ["Shortlisted","Approved","Applying","Applied","Screening","Interview","Offer","Accepted"];
+  const closed = ["On-hold","Rejected","Ghosted","Withdrawn","Skipped"];
+  const col = s => { const js = S.jobs.filter(j => j.status === s);
+    return `<div class="col"><h3><span>${s}</span><span class="pill">${js.length}</span></h3>
+      ${js.map(j => `<div class="kcard"><b>${esc(j.company)}</b>${esc(j.role)}<br>
+        <span class="muted">${esc(j.country)} · ${esc(money(j))}</span><br>
+        ${j.fit_score ? `<span class="pill blue">fit ${esc(j.fit_score)}/5</span> ` : ""}${j.priority ? `<span class="pill">${esc(j.priority)}</span>` : ""}
+        ${j.next_action ? `<div class="small" style="margin-top:4px">→ ${esc(j.next_action)} ${esc(j.next_action_date)}</div>` : ""}</div>`).join("") || '<div class="empty small">—</div>'}</div>`; };
+  return `<h2 style="margin-top:0">Active pipeline</h2><div class="kanban">${main.map(col).join("")}</div>
+          <h2>Closed / paused</h2><div class="kanban">${closed.map(col).join("")}</div>`;
+}
+
+// ---------- ALL JOBS ----------
+const JOB_COLS = [["date_found","Found"],["date_posted","Posted"],["company","Company"],["role","Role"],["country","Ctry"],["location_rule","Location"],
+  ["employment_type","Type"],["pay","Pay"],["pay_usd_month_est","USD/mo"],["fit_score","Fit"],["priority","Priority"],
+  ["status","Status"],["source","Source"],["date_applied","Applied"],["next_action_date","Next"],["notes","Notes"]];
+function viewJobs() {
+  const opts = (k) => [...new Set(S.jobs.map(j => j[k]).filter(Boolean))].sort();
+  const sel = (k, label) => `<select data-f="${k}"><option value="">${label}: all</option>${opts(k).map(v =>
+    `<option ${S.filters[k] === v ? "selected" : ""}>${esc(v)}</option>`).join("")}</select>`;
+  return `<div class="filters">
+    <input id="q" type="search" placeholder="Search company, role, notes…" value="${esc(S.filters.q || "")}">
+    ${sel("status","Status")}${sel("country","Country")}${sel("role_category","Category")}${sel("source","Source")}${sel("priority","Priority")}
+  </div><div id="jobsTable"></div>`;
+}
+function bindJobs() {
+  document.querySelectorAll("[data-f]").forEach(s => s.onchange = () => { S.filters[s.dataset.f] = s.value; drawJobs(); });
+  const q = document.getElementById("q"); q.oninput = () => { S.filters.q = q.value; drawJobs(); };
+  drawJobs();
+}
+function drawJobs() {
+  const f = S.filters, q = (f.q || "").toLowerCase();
+  let rows = S.jobs.filter(j => ["status","country","role_category","source","priority"].every(k => !f[k] || j[k] === f[k])
+    && (!q || Object.values(j).join(" ").toLowerCase().includes(q)));
+  const { key, dir } = S.sort;
+  const num = ["pay_usd_month_est","fit_score"].includes(key);
+  rows.sort((a, b) => num ? dir * ((+a[key] || 0) - (+b[key] || 0)) : dir * String(a[key] || "").localeCompare(String(b[key] || "")));
+  document.getElementById("jobsTable").innerHTML = `<p class="small muted">${rows.length} of ${S.jobs.length} jobs</p>
+  <div class="tablewrap"><table><thead><tr>${JOB_COLS.map(([k, l]) => `<th data-k="${k}" class="${["pay_usd_month_est","fit_score"].includes(k) ? "num" : ""}">${l}${key === k ? (dir > 0 ? " ▲" : " ▼") : ""}</th>`).join("")}</tr></thead>
+  <tbody>${rows.map(j => `<tr>
+    <td>${esc(j.date_found)}</td><td>${esc(j.date_posted || j.date_updated)}</td><td><b>${esc(j.company)}</b></td>
+    <td>${j.job_url ? `<a href="${esc(j.job_url)}" target="_blank" rel="noopener">${esc(j.role)}</a>` : esc(j.role)}</td>
+    <td>${esc(j.country)}</td><td>${esc(j.location_rule)}</td><td>${esc(j.employment_type)}</td><td>${esc(money(j))}</td>
+    <td class="num">${j.pay_usd_month_est ? "$" + Number(j.pay_usd_month_est).toLocaleString() : ""}</td>
+    <td class="num">${esc(j.fit_score)}</td><td>${esc(j.priority)}</td><td><span class="pill">${esc(j.status)}</span></td>
+    <td>${esc(j.source)}</td><td>${esc(j.date_applied)}</td><td>${esc(j.next_action_date)}</td><td class="wrap small">${esc(j.notes)}</td></tr>`).join("")}
+  </tbody></table></div>`;
+  document.querySelectorAll("#jobsTable th").forEach(th => th.onclick = () => {
+    const k = th.dataset.k === "pay" ? "pay_usd_month_est" : th.dataset.k;
+    S.sort = { key: k, dir: S.sort.key === k ? -S.sort.dir : 1 }; drawJobs();
+  });
+}
+
+// ---------- REPORTS ----------
+function firstResponse(id) {
+  const ds = S.activity.filter(a => a.job_id === id && RESPONSE_EVENTS.has(a.type)).map(a => a.date).sort();
+  return ds[0] || null;
+}
+const responded = j => REPLY.has(j.status) || !!firstResponse(j.id);
+function stats(cohort) {
+  const replied = cohort.filter(responded);
+  const gaps = cohort.map(j => firstResponse(j.id) && daysBetween(j.date_applied, firstResponse(j.id))).filter(x => x !== null && x !== "" && !isNaN(x));
+  return { applied: cohort.length, replies: replied.length, rate: cohort.length ? replied.length / cohort.length : 0,
+    interviews: cohort.filter(j => ["Interview","Offer","Accepted"].includes(j.status) || S.activity.some(a => a.job_id === j.id && a.type === "Interview")).length,
+    offers: cohort.filter(j => ["Offer","Accepted"].includes(j.status)).length,
+    rejected: cohort.filter(j => j.status === "Rejected").length, ghosted: cohort.filter(j => j.status === "Ghosted").length,
+    avgDays: gaps.length ? gaps.reduce((a, b) => a + b, 0) / gaps.length : null };
+}
+const pct = x => Math.round(x * 100) + "%";
+function groupBy(cohort, fn) {
+  const g = {}; cohort.forEach(j => (g[fn(j) || "(blank)"] ||= []).push(j));
+  return Object.entries(g).map(([k, js]) => ({ k, ...stats(js) }));
+}
+function hbars(rows, title) {
+  if (!rows.length) return `<div class="card"><h3>${title}</h3><p class="empty small">No applications yet.</p></div>`;
+  const max = Math.max(...rows.map(r => r.applied), 1);
+  rows.sort((a, b) => b.applied - a.applied);
+  return `<div class="card chart"><h3>${title}</h3>
+    <div class="small muted" style="margin-bottom:6px">Bar = applied · right = replies / rate</div>
+    ${rows.map(r => `<div class="hbar" data-tip="${esc(r.k)}: ${r.applied} applied, ${r.replies} replied (${pct(r.rate)})">
+      <span class="lab" title="${esc(r.k)}">${esc(r.k)}</span>
+      <div class="track"><div class="fill" style="width:${r.applied / max * 100}%"></div></div>
+      <span class="val">${r.replies} · ${pct(r.rate)}</span></div>`).join("")}
+    <details class="small" style="margin-top:8px"><summary>Table</summary><table><tr><th></th><th class="num">Applied</th><th class="num">Replies</th><th class="num">Rate</th><th class="num">Interviews</th></tr>
+    ${rows.map(r => `<tr><td>${esc(r.k)}</td><td class="num">${r.applied}</td><td class="num">${r.replies}</td><td class="num">${pct(r.rate)}</td><td class="num">${r.interviews}</td></tr>`).join("")}</table></details></div>`;
+}
+function vbars(rows, title) {
+  if (!rows.length) return `<div class="card"><h3>${title}</h3><p class="empty small">No applications yet.</p></div>`;
+  const max = Math.max(...rows.map(r => r.applied), 1);
+  return `<div class="card chart"><h3>${title}</h3>
+    <div class="vbars">${rows.map(r => `<div class="b" data-tip="${esc(r.k)}: ${r.applied} applied, ${r.replies} replied (${pct(r.rate)}), ${r.interviews} interviews">
+      <div class="fill" style="height:${r.applied / max * 100}%"></div></div>`).join("")}</div>
+    <div class="xlabels">${rows.map(r => `<span>${esc(r.k.replace(/^\d{4}-/, ""))}</span>`).join("")}</div>
+    <details class="small" style="margin-top:8px"><summary>Table</summary><table><tr><th></th><th class="num">Applied</th><th class="num">Replies</th><th class="num">Rate</th><th class="num">Interviews</th><th class="num">Offers</th></tr>
+    ${rows.map(r => `<tr><td>${esc(r.k)}</td><td class="num">${r.applied}</td><td class="num">${r.replies}</td><td class="num">${pct(r.rate)}</td><td class="num">${r.interviews}</td><td class="num">${r.offers}</td></tr>`).join("")}</table></details></div>`;
+}
+function viewReports() {
+  const cohort = S.jobs.filter(j => j.date_applied);
+  const s = stats(cohort);
+  const bySource = groupBy(cohort, j => j.source).filter(r => r.applied >= 1);
+  const best = bySource.filter(r => r.applied >= 3).sort((a, b) => b.rate - a.rate)[0];
+  const byWeek = groupBy(cohort, j => isoWeek(j.date_applied)).sort((a, b) => a.k.localeCompare(b.k)).slice(-12);
+  const byMonth = groupBy(cohort, j => j.date_applied.slice(0, 7)).sort((a, b) => a.k.localeCompare(b.k)).slice(-12);
+  const tile = (l, v, sub = "") => `<div class="tile"><div class="l">${l}</div><div class="v">${v}</div>${sub ? `<div class="small muted">${sub}</div>` : ""}</div>`;
+  return `<p class="small muted" style="margin-top:0">Counts follow each job you applied to (by date applied) and where it is now. Same rules as <code>scripts/report.py</code>.</p>
+  <div class="tiles">
+    ${tile("Applied", s.applied)}${tile("Replies", s.replies, "Screening + Interview + Offer")}
+    ${tile("Response rate", pct(s.rate))}${tile("Interviews", s.interviews)}${tile("Offers", s.offers)}
+    ${tile("Avg days to 1st reply", s.avgDays === null ? "–" : s.avgDays.toFixed(1))}
+    ${tile("Best source", best ? esc(best.k) : "–", best ? `${pct(best.rate)} of ${best.applied}` : "needs ≥3 applications")}
+  </div>
+  <div class="grid g2" style="margin-top:12px">
+    ${vbars(byWeek, "Applications by week")}${vbars(byMonth, "Applications by month")}
+    ${hbars(groupBy(cohort, j => j.country), "By country")}${hbars(bySource, "By source")}
+    ${hbars(groupBy(cohort, j => j.role_category), "By role category")}
+  </div>`;
+}
+
+// ---------- CONTACTS ----------
+function viewContacts() {
+  if (!S.contacts.length) return `<p class="empty">No contacts yet.</p>`;
+  const rows = [...S.contacts].sort((a, b) => (a.next_follow_up || "9").localeCompare(b.next_follow_up || "9"));
+  return `<div class="tablewrap"><table><thead><tr><th>Name</th><th>Title</th><th>Company</th><th>Email / LinkedIn</th>
+    <th>Jobs</th><th>Last contacted</th><th>Next follow-up</th><th>Notes</th></tr></thead><tbody>
+    ${rows.map(c => { const od = c.next_follow_up && c.next_follow_up < TODAY;
+      return `<tr class="${od ? "overdue" : ""}"><td><b>${esc(c.name)}</b></td><td>${esc(c.title)}</td><td>${esc(c.company)}</td>
+      <td>${c.email ? `<a href="mailto:${esc(c.email)}">${esc(c.email)}</a>` : ""} ${c.linkedin_url ? `<a href="${esc(c.linkedin_url)}" target="_blank" rel="noopener">LinkedIn</a>` : ""}</td>
+      <td>${esc(c.related_job_ids)}</td><td>${esc(c.last_contacted)}</td><td>${esc(c.next_follow_up)}${od ? " (overdue)" : ""}</td>
+      <td class="wrap small">${esc(c.notes)}</td></tr>`; }).join("")}</tbody></table></div>`;
+}
+
+// ---------- tooltip ----------
+const tip = document.getElementById("tip");
+document.addEventListener("mousemove", e => {
+  const el = e.target.closest("[data-tip]");
+  if (!el) { tip.style.display = "none"; return; }
+  tip.textContent = el.dataset.tip; tip.style.display = "block";
+  const x = Math.min(e.clientX + 12, innerWidth - tip.offsetWidth - 8);
+  tip.style.left = x + "px"; tip.style.top = (e.clientY + 14) + "px";
+});
+
+load();
+</script>
+</body>
+</html>

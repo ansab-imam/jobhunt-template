@@ -1,0 +1,12 @@
+{
+  "_note": "Approximate USD value of 1 unit of each currency. Edit by hand any time; scripts recompute pay_usd_month_est.",
+  "updated": "2026-10-06",
+  "usd_per_unit": {
+    "USD": 1.0,
+    "CAD": 0.72,
+    "GBP": 1.33,
+    "AUD": 0.66,
+    "EUR": 1.16,
+    "PKR": 0.00355
+  }
+}

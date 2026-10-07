@@ -1,0 +1,36 @@
+{
+  "_note": "Single source of truth for every resume. Claude fills this from YOUR resume during onboarding (ONBOARDING.md).",
+  "name": "JANE DOE",
+  "contact": "City, Country | +00 000 0000000 | you@example.com | linkedin.com/in/yourname",
+  "availability": "Your working hours",
+  "default_headline": "Your Title | Key Skills",
+  "experience": [
+    {
+      "company": "Example Company",
+      "location": "City",
+      "roles": [
+        {
+          "key": "example_role",
+          "title": "Your Title",
+          "dates": "Jan 2024 - Present",
+          "bullets": {
+            "one": "What you did, in plain words.",
+            "two": "A real result (only if true)."
+          }
+        }
+      ]
+    }
+  ],
+  "skills": {
+    "Core": [
+      "Skill one",
+      "Skill two"
+    ],
+    "Tools & Platforms": [
+      "Tool one"
+    ]
+  },
+  "education": [
+    "Degree - University, Years"
+  ]
+}
